@@ -1,15 +1,16 @@
-// src/WeeklyCalendar.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { format, startOfWeek, addDays, parseISO } from 'date-fns';
-import { firebase } from '../firebase'; // Ensure the correct path to firebase.js
+import { firestore, storage } from '../firebase';
+import './WeeklyCalendar.css';
 
-const db = firebase.firestore();
+const db = firestore;
 
 const WeeklyCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [newEvent, setNewEvent] = useState({ date: '', title: '' });
+  const [newEvent, setNewEvent] = useState({ date: '', startTime: '', endTime: '', name: '', members: '', artifacts: [] });
+  const [artifactFiles, setArtifactFiles] = useState([]);
 
   const fetchEvents = useCallback(async () => {
     const start = format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'yyyy-MM-dd');
@@ -24,8 +25,18 @@ const WeeklyCalendar = () => {
     setEvents(fetchedEvents);
   }, [currentDate]);
 
+  const handleFileUpload = async (file) => {
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(`artifacts/${file.name}`);
+    await fileRef.put(file);
+    return await fileRef.getDownloadURL();
+  };
+
   const addEventToFirestore = async (event) => {
     try {
+      const artifactURLs = await Promise.all(artifactFiles.map(file => handleFileUpload(file)));
+      event.artifacts = artifactURLs;
+      event.members = event.members.split(',').map(member => member.trim());
       await db.collection('events').add(event);
       fetchEvents(); // Refresh events after adding
     } catch (error) {
@@ -56,35 +67,48 @@ const WeeklyCalendar = () => {
     setCurrentDate(addDays(currentDate, 7));
   };
 
-  const handleAddEvent = (event) => {
-    event.preventDefault();
-    addEventToFirestore({ ...newEvent, date: format(parseISO(newEvent.date), 'yyyy-MM-dd') });
+  const handleAddEvent = async (e) => {
+    e.preventDefault();
+    await addEventToFirestore({ ...newEvent, date: format(parseISO(newEvent.date), 'yyyy-MM-dd') });
     setShowOverlay(false);
-    setNewEvent({ date: '', title: '' });
+    setNewEvent({ date: '', startTime: '', endTime: '', name: '', members: '', artifacts: [] });
+    setArtifactFiles([]);
   };
 
   const handleChange = (e) => {
-    setNewEvent({ ...newEvent, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewEvent({ ...newEvent, [name]: value });
+  };
+
+  const handleFileChange = (e) => {
+    setArtifactFiles([...e.target.files]);
   };
 
   return (
-    <div>
+    <div className="weekly-calendar">
       <h2>Weekly Calendar</h2>
-      <div>
+      <div className="week-navigation">
         <button onClick={goToPreviousWeek}>Previous</button>
         <button onClick={goToNextWeek}>Next</button>
         <button onClick={() => setShowOverlay(true)}>Add Event</button>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+      <div className="week-dates">
         {weekDates.map((date) => (
-          <div key={date} style={{ textAlign: 'center' }}>
+          <div key={date} className="week-date">
             <div>{format(date, 'EEE')}</div>
             <div>{format(date, 'MM/dd')}</div>
             <div>
               {events
                 .filter(event => event.date === format(date, 'yyyy-MM-dd'))
                 .map((event, index) => (
-                  <div key={index}>{event.title}</div>
+                  <div key={index} className="event">
+                    <div>{event.name}</div>
+                    <div>{event.startTime} - {event.endTime}</div>
+                    <div>Members: {event.members.join(', ')}</div>
+                    {event.artifacts && event.artifacts.map((url, i) => (
+                      <div key={i}><a href={url} target="_blank" rel="noopener noreferrer">Artifact {i + 1}</a></div>
+                    ))}
+                  </div>
                 ))}
             </div>
           </div>
@@ -106,13 +130,51 @@ const WeeklyCalendar = () => {
                 />
               </label>
               <label>
-                Title:
+                Start Time:
                 <input
-                  type="text"
-                  name="title"
-                  value={newEvent.title}
+                  type="time"
+                  name="startTime"
+                  value={newEvent.startTime}
                   onChange={handleChange}
                   required
+                />
+              </label>
+              <label>
+                End Time:
+                <input
+                  type="time"
+                  name="endTime"
+                  value={newEvent.endTime}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+              <label>
+                Name of Activity:
+                <input
+                  type="text"
+                  name="name"
+                  value={newEvent.name}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+              <label>
+                Members (comma separated):
+                <input
+                  type="text"
+                  name="members"
+                  value={newEvent.members}
+                  onChange={handleChange}
+                  required
+                />
+              </label>
+              <label>
+                Artifacts:
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
                 />
               </label>
               <button type="submit">Add Event</button>

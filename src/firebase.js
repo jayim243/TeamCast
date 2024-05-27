@@ -1,6 +1,6 @@
-// src/firebase.js
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA9c0gD5tEO3HbLiiaIUnEdmJtHXgf_3sg",
@@ -18,6 +18,7 @@ if (!firebase.apps.length) {
 }
 
 export const firestore = firebase.firestore();
-export { firebase }; // Export firebase as named export
+export const storage = firebase.storage();
+export { firebase };
 
 
