@@ -1,45 +1,134 @@
-/* src/WeeklyCalendar.css */
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .overlay-content {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    width: 300px;
-    text-align: center;
-  }
-  
-  .overlay form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .overlay form label {
-    margin-bottom: 10px;
-  }
-  
-  .overlay form input {
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .overlay form button {
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.overlay-content {
+  background: white;
+  border-radius: 8px;
+  width: 400px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.overlay-content h3 {
+  margin-top: 0;
+  font-size: 1.2em;
+}
+
+.overlay-content form {
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay-content label {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
+
+.overlay-content input[type="text"],
+.overlay-content input[type="date"],
+.overlay-content input[type="time"],
+.overlay-content input[type="file"] {
+  margin-top: 5px;
+  padding: 8px;
+  font-size: 0.9em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: calc(100% - 20px);
+}
+
+.overlay-content input[type="file"] {
+  padding: 0;
+}
+
+.overlay-content button {
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 0.9em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.overlay-content button[type="submit"] {
+  background: #4285f4;
+  color: white;
+}
+
+.overlay-content button[type="button"] {
+  background: #f4f4f4;
+  margin-left: 5px;
+}
+
+.overlay-content button[type="submit"]:hover,
+.overlay-content button[type="button"]:hover {
+  opacity: 0.9;
+}
+
+.weekly-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.week-navigation button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #4285f4;
+  color: white;
+}
+
+.week-navigation button:hover {
+  opacity: 0.9;
+}
+
+.week-dates {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  /* max-width: 1000px; */
+}
+
+
+.week-date {
+  flex: 1;
+  text-align: center;
+  border-left: 1px solid #ddd;
+  padding: 10px;
+}
+
+.week-date:first-child {
+  border-left: none;
+}
+
+.week-date div {
+  margin-bottom: 5px;
+}
+
+.event {
+  background: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  margin: 5px 0;
+  text-align: left;
+}
