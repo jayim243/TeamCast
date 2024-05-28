@@ -1,3 +1,94 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+.weekly-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.week-navigation button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #4285f4;
+  color: white;
+}
+
+.week-navigation button:hover {
+  opacity: 0.9;
+}
+
+.week-dates-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  /* max-width: 1000px; */
+  flex-grow: 1;
+}
+
+.week-dates {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.week-date {
+  flex: 1;
+  text-align: center;
+  border-left: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.week-date:first-child {
+  border-left: none;
+}
+
+.week-date div {
+  margin-bottom: 5px;
+}
+
+.event-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.event {
+  background: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  margin: 5px 0;
+  text-align: left;
+}
+
+.event img {
+  max-width: 100px;
+  max-height: 100px;
+  margin: 5px 0;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -74,61 +165,11 @@
   opacity: 0.9;
 }
 
-.weekly-calendar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.week-navigation {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.week-navigation button {
-  margin: 0 10px;
-  padding: 10px 20px;
-  font-size: 1em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: #4285f4;
-  color: white;
-}
-
-.week-navigation button:hover {
-  opacity: 0.9;
-}
-
-.week-dates {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  /* max-width: 1000px; */
-}
-
-
-.week-date {
-  flex: 1;
-  text-align: center;
-  border-left: 1px solid #ddd;
-  padding: 10px;
-}
-
-.week-date:first-child {
-  border-left: none;
-}
-
-.week-date div {
-  margin-bottom: 5px;
-}
-
-.event {
-  background: #f1f1f1;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 5px;
+.event img.thumbnail {
+  max-width: 100px;
+  max-height: 100px;
   margin: 5px 0;
-  text-align: left;
+  border-radius: 4px;
+  object-fit: cover;
 }
+
