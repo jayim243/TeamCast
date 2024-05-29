@@ -18,6 +18,7 @@ const WeeklyCalendar = () => {
     artifacts: [],
   });
   const [artifactFiles, setArtifactFiles] = useState([]);
+  const [loading, setloading] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     const start = format(
@@ -116,20 +117,27 @@ const WeeklyCalendar = () => {
 
   const handleAddEvent = async (e) => {
     e.preventDefault();
-    await addEventToFirestore({
-      ...newEvent,
-      date: format(parseISO(newEvent.date), "yyyy-MM-dd"),
-    });
-    setShowOverlay(false);
-    setNewEvent({
-      date: "",
-      startTime: "",
-      endTime: "",
-      name: "",
-      members: "",
-      artifacts: [],
-    });
-    setArtifactFiles([]);
+    setloading(true);
+    try {
+      await addEventToFirestore({
+        ...newEvent,
+        date: format(parseISO(newEvent.date), "yyyy-MM-dd"),
+      });
+      setShowOverlay(false);
+      setNewEvent({
+        date: "",
+        startTime: "",
+        endTime: "",
+        name: "",
+        members: "",
+        artifacts: [],
+      });
+      setArtifactFiles([]);
+    } catch (error) {
+      console.log("error: failed to add event");
+    } finally {
+      setloading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -150,6 +158,12 @@ const WeeklyCalendar = () => {
 
   return (
     <div className="weekly-calendar">
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+        </div>
+      )}
+
       <h2>TeamCast</h2>
       <div className="week-navigation">
         <button onClick={goToPreviousWeek}>Previous</button>
