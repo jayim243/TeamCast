@@ -46,6 +46,12 @@ const WeeklyCalendar = () => {
     setEvents(fetchedEvents);
   }, [currentDate]);
 
+  const fetchMembers = useCallback(async () => {
+    const snapshot = await db.collection("members").get();
+    const fetchedMembers = snapshot.docs.map((doc) => doc.data().name);
+    setMembers(fetchedMembers);
+  }, []);
+
   const handleFileUpload = async (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -87,7 +93,9 @@ const WeeklyCalendar = () => {
       );
       event.artifacts = artifactURLs;
       event.thumbnail = thumbnailURL;
-      event.members = event.members.split(",").map((member) => member.trim());
+      if (members) {
+        event.members = Array.from(event.members);
+      }
       await db.collection("events").add(event);
       fetchEvents(); // Refresh events after adding
     } catch (error) {
@@ -97,7 +105,8 @@ const WeeklyCalendar = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [currentDate, fetchEvents]);
+    fetchMembers();
+  }, [currentDate, fetchEvents, fetchMembers]);
 
   const getWeekDates = (date) => {
     const startOfWeekDate = startOfWeek(date, { weekStartsOn: 0 });
@@ -132,7 +141,7 @@ const WeeklyCalendar = () => {
         startTime: "",
         endTime: "",
         name: "",
-        members: "",
+        members: new Set(),
         artifacts: [],
       });
       setArtifactFiles([]);
@@ -152,7 +161,8 @@ const WeeklyCalendar = () => {
     setArtifactFiles([...e.target.files]);
   };
 
-  const openAddMembers = (e) => {
+  const openAddMembers = () => {
+    setNewMembers([...members, "", "", "", ""].slice(0, 4)); // Ensure newMembers has 4 elements
     setShowMembersOverlay(true);
   };
 
@@ -162,8 +172,26 @@ const WeeklyCalendar = () => {
     setNewMembers(updatedMembers);
   };
 
-  const saveMembers = () => {
-    setMembers(newMembers.filter((member) => member.trim() !== ""));
+  const saveMembers = async () => {
+    const membersToSave = newMembers.filter((member) => member.trim() !== "");
+    const membersCollection = db.collection("members");
+
+    // Fetch existing members
+    const snapshot = await membersCollection.get();
+    const existingMembers = snapshot.docs.map((doc) => doc.id);
+
+    // Delete existing members
+    for (const id of existingMembers) {
+      await membersCollection.doc(id).delete();
+    }
+
+    // Add new members
+    for (const member of membersToSave) {
+      await membersCollection.add({ name: member });
+    }
+
+    setMembers(membersToSave);
+    setNewMembers(["", "", "", ""]);
     setShowMembersOverlay(false);
   };
 
