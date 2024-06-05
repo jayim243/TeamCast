@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { firestore, storage } from "../firebase";
 import "./WeeklyCalendar.css";
@@ -22,6 +22,7 @@ const WeeklyCalendar = () => {
   const [showMembersOverlay, setShowMembersOverlay] = useState(false);
   const [newMembers, setNewMembers] = useState(["", "", "", ""]);
   const [members, setMembers] = useState([]);
+  const fileInputRef = useRef(null);
 
   const fetchEvents = useCallback(async () => {
     const start = format(
@@ -158,7 +159,11 @@ const WeeklyCalendar = () => {
   };
 
   const handleFileChange = (e) => {
-    setArtifactFiles([...e.target.files]);
+    setArtifactFiles([...artifactFiles, ...e.target.files]);
+  };
+
+  const removeFile = (file) => {
+    setArtifactFiles((prevFiles) => prevFiles.filter((f) => f !== file));
   };
 
   const openAddMembers = () => {
@@ -173,26 +178,33 @@ const WeeklyCalendar = () => {
   };
 
   const saveMembers = async () => {
-    const membersToSave = newMembers.filter((member) => member.trim() !== "");
-    const membersCollection = db.collection("members");
+    try {
+      setLoading(true);
+      const membersToSave = newMembers.filter((member) => member.trim() !== "");
+      const membersCollection = db.collection("members");
 
-    // Fetch existing members
-    const snapshot = await membersCollection.get();
-    const existingMembers = snapshot.docs.map((doc) => doc.id);
+      // Fetch existing members
+      const snapshot = await membersCollection.get();
+      const existingMembers = snapshot.docs.map((doc) => doc.id);
 
-    // Delete existing members
-    for (const id of existingMembers) {
-      await membersCollection.doc(id).delete();
+      // Delete existing members
+      for (const id of existingMembers) {
+        await membersCollection.doc(id).delete();
+      }
+
+      // Add new members
+      for (const member of membersToSave) {
+        await membersCollection.add({ name: member });
+      }
+
+      setMembers(membersToSave);
+      setNewMembers(["", "", "", ""]);
+      setShowMembersOverlay(false);
+    } catch (error) {
+      console.log("error: failed to add/update members");
+    } finally {
+      setLoading(false);
     }
-
-    // Add new members
-    for (const member of membersToSave) {
-      await membersCollection.add({ name: member });
-    }
-
-    setMembers(membersToSave);
-    setNewMembers(["", "", "", ""]);
-    setShowMembersOverlay(false);
   };
 
   const handleMemberCheckboxChange = (e) => {
@@ -363,14 +375,38 @@ const WeeklyCalendar = () => {
                   ))}
                 </div>
               </label>
-              <label>
-                Artifacts:
-                <input type="file" multiple onChange={handleFileChange} />
-              </label>
-              <button type="submit">Add Event</button>
-              <button type="button" onClick={() => setShowOverlay(false)}>
-                Cancel
-              </button>
+              <div>
+                <label>Artifacts:</label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                  ref={fileInputRef}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  Add Files
+                </button>
+                <div>
+                  {artifactFiles.map((file, index) => (
+                    <div key={index}>
+                      {file.name}{" "}
+                      <button type="button" onClick={() => removeFile(file)}>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="button-container">
+                <button type="submit">Add Event</button>
+                <button type="button" onClick={() => setShowOverlay(false)}>
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         </div>
