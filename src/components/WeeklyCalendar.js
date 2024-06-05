@@ -5,6 +5,11 @@ import "./WeeklyCalendar.css";
 
 const db = firestore;
 
+
+// rollover to next day? display preview of image thumbnails regardless of file type(pdf, png)
+
+
+
 const WeeklyCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
