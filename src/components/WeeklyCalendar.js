@@ -19,10 +19,14 @@ const WeeklyCalendar = () => {
     startTime: "",
     endTime: "",
     name: "",
-    members: "",
+    members: new Set(),
     artifacts: [],
   });
   const [artifactFiles, setArtifactFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showMembersOverlay, setShowMembersOverlay] = useState(false);
+  const [newMembers, setNewMembers] = useState(["", "", "", ""]);
+  const [members, setMembers] = useState([]);
 
   const fetchEvents = useCallback(async () => {
     const start = format(
@@ -121,20 +125,27 @@ const WeeklyCalendar = () => {
 
   const handleAddEvent = async (e) => {
     e.preventDefault();
-    await addEventToFirestore({
-      ...newEvent,
-      date: format(parseISO(newEvent.date), "yyyy-MM-dd"),
-    });
-    setShowOverlay(false);
-    setNewEvent({
-      date: "",
-      startTime: "",
-      endTime: "",
-      name: "",
-      members: "",
-      artifacts: [],
-    });
-    setArtifactFiles([]);
+    setLoading(true);
+    try {
+      await addEventToFirestore({
+        ...newEvent,
+        date: format(parseISO(newEvent.date), "yyyy-MM-dd"),
+      });
+      setShowOverlay(false);
+      setNewEvent({
+        date: "",
+        startTime: "",
+        endTime: "",
+        name: "",
+        members: "",
+        artifacts: [],
+      });
+      setArtifactFiles([]);
+    } catch (error) {
+      console.log("error: failed to add event");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -146,6 +157,34 @@ const WeeklyCalendar = () => {
     setArtifactFiles([...e.target.files]);
   };
 
+  const openAddMembers = (e) => {
+    setShowMembersOverlay(true);
+  };
+
+  const handleMemberChange = (e, index) => {
+    const updatedMembers = [...newMembers];
+    updatedMembers[index] = e.target.value;
+    setNewMembers(updatedMembers);
+  };
+
+  const saveMembers = () => {
+    setMembers(newMembers.filter((member) => member.trim() !== ""));
+    setShowMembersOverlay(false);
+  };
+
+  const handleMemberCheckboxChange = (e) => {
+    const member = e.target.value;
+    setNewEvent((prevEvent) => {
+      const newMembers = new Set(prevEvent.members);
+      if (newMembers.has(member)) {
+        newMembers.delete(member);
+      } else {
+        newMembers.add(member);
+      }
+      return { ...prevEvent, members: newMembers };
+    });
+  };
+
   const formatTime = (timeString) => {
     const [hour, minute] = timeString.split(":").map(Number);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -155,10 +194,40 @@ const WeeklyCalendar = () => {
 
   return (
     <div className="weekly-calendar">
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+        </div>
+      )}
+      {showMembersOverlay && (
+        <div className="overlay">
+          <div className="overlay-content">
+            <h3>{members.length > 0 ? "Edit Members" : "Add Members"}</h3>
+            {newMembers.map((member, index) => (
+              <label key={index}>
+                Member {index + 1}:
+                <input
+                  type="text"
+                  value={member}
+                  onChange={(e) => handleMemberChange(e, index)}
+                />
+              </label>
+            ))}
+            <div className="button-container">
+              <button onClick={saveMembers}>Save Members</button>
+              <button onClick={() => setShowMembersOverlay(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2>TeamCast</h2>
       <div className="week-navigation">
         <button onClick={goToPreviousWeek}>Previous</button>
         <button onClick={goToNextWeek}>Next</button>
+        <button onClick={openAddMembers}>Add Members</button>
         <button onClick={() => setShowOverlay(true)}>Add Event</button>
       </div>
       <div className="week-dates-container">
@@ -254,14 +323,22 @@ const WeeklyCalendar = () => {
                 />
               </label>
               <label>
-                Members (comma separated):
-                <input
-                  type="text"
-                  name="members"
-                  value={newEvent.members}
-                  onChange={handleChange}
-                  required
-                />
+                Members:
+                <div className="members">
+                  {members.map((member, index) => (
+                    <div key={index}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          value={member}
+                          checked={newEvent.members.has(member)}
+                          onChange={handleMemberCheckboxChange}
+                        />
+                        {member}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </label>
               <label>
                 Artifacts:
