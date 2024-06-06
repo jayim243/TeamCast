@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { firestore, storage } from "../firebase";
 import "./WeeklyCalendar.css";
+import WeekNavigation from "./WeekNavigation";
+import EventList from "./EventList";
+import EventForm from "./EventForm";
+import MembersOverlay from "./MembersOverlay";
 
 const db = firestore;
 
@@ -235,181 +239,48 @@ const WeeklyCalendar = () => {
         </div>
       )}
       {showMembersOverlay && (
-        <div className="overlay">
-          <div className="overlay-content">
-            <h3>{members.length > 0 ? "Edit Members" : "Add Members"}</h3>
-            {newMembers.map((member, index) => (
-              <label key={index}>
-                Member {index + 1}:
-                <input
-                  type="text"
-                  value={member}
-                  onChange={(e) => handleMemberChange(e, index)}
-                />
-              </label>
-            ))}
-            <div className="button-container">
-              <button onClick={saveMembers}>Save Members</button>
-              <button onClick={() => setShowMembersOverlay(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <MembersOverlay
+          members={members}
+          newMembers={newMembers}
+          setNewMembers={setNewMembers}
+          handleMemberChange={handleMemberChange}
+          saveMembers={saveMembers}
+          setShowMembersOverlay={setShowMembersOverlay}
+        />
       )}
-
       <h2>TeamCast</h2>
-      <div className="week-navigation">
-        <button onClick={goToPreviousWeek}>Previous</button>
-        <button onClick={goToNextWeek}>Next</button>
-        <button onClick={openAddMembers}>Add Members</button>
-        <button onClick={() => setShowOverlay(true)}>Add Event</button>
-      </div>
-      <div className="week-dates-container">
-        <div className="week-dates">
-          {weekDates.map((date) => (
-            <div key={date} className="week-date">
-              <div>{format(date, "EEE")}</div>
-              <div>{format(date, "MM/dd")}</div>
-              <div className="event-container">
-                {events
-                  .filter((event) => event.date === format(date, "yyyy-MM-dd"))
-                  .map((event, index) => (
-                    <div key={index} className="event">
-                      <div>{event.name}</div>
-                      <div>
-                        {formatTime(event.startTime)} -{" "}
-                        {formatTime(event.endTime)}
-                      </div>
-                      <div>Members: {event.members.join(", ")}</div>
-                      {event.thumbnail && (
-                        <img
-                          src={event.thumbnail}
-                          alt="Event Thumbnail"
-                          className="thumbnail"
-                        />
-                      )}
-                      {event.artifacts &&
-                        event.artifacts.map((url, i) => (
-                          <div key={i}>
-                            {url.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
-                              <img src={url} alt={`Artifact ${i + 1}`} />
-                            ) : (
-                              <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Artifact {i + 1}
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <WeekNavigation
+        goToPreviousWeek={goToPreviousWeek}
+        goToNextWeek={goToNextWeek}
+        openAddMembers={openAddMembers}
+        setShowOverlay={setShowOverlay}
+      />
+      <EventList
+        weekDates={weekDates}
+        events={events}
+        formatTime={formatTime}
+        members={members}
+        newEvent={newEvent}
+        setNewEvent={setNewEvent}
+        handleMemberCheckboxChange={handleMemberCheckboxChange}
+        handleFileChange={handleFileChange}
+        fileInputRef={fileInputRef}
+        removeFile={removeFile}
+        artifactFiles={artifactFiles}
+      />
       {showOverlay && (
-        <div className="overlay">
-          <div className="overlay-content">
-            <h3>Add Event</h3>
-            <form onSubmit={handleAddEvent}>
-              <label>
-                Date:
-                <input
-                  type="date"
-                  name="date"
-                  value={newEvent.date}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-              <label>
-                Start Time:
-                <input
-                  type="time"
-                  name="startTime"
-                  value={newEvent.startTime}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-              <label>
-                End Time:
-                <input
-                  type="time"
-                  name="endTime"
-                  value={newEvent.endTime}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-              <label>
-                Name of Activity:
-                <input
-                  type="text"
-                  name="name"
-                  value={newEvent.name}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-              <label>
-                Members:
-                <div className="members">
-                  {members.map((member, index) => (
-                    <div key={index}>
-                      <label>
-                        <input
-                          type="checkbox"
-                          value={member}
-                          checked={newEvent.members.has(member)}
-                          onChange={handleMemberCheckboxChange}
-                        />
-                        {member}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </label>
-              <div>
-                <label>Artifacts:</label>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                  ref={fileInputRef}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  Add Files
-                </button>
-                <div>
-                  {artifactFiles.map((file, index) => (
-                    <div key={index}>
-                      {file.name}{" "}
-                      <button type="button" onClick={() => removeFile(file)}>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="button-container">
-                <button type="submit">Add Event</button>
-                <button type="button" onClick={() => setShowOverlay(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EventForm
+          handleAddEvent={handleAddEvent}
+          newEvent={newEvent}
+          handleChange={handleChange}
+          artifactFiles={artifactFiles}
+          fileInputRef={fileInputRef}
+          handleFileChange={handleFileChange}
+          removeFile={removeFile}
+          setShowOverlay={setShowOverlay}
+          members={members}
+          handleMemberCheckboxChange={handleMemberCheckboxChange}
+        />
       )}
     </div>
   );
